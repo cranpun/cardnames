@@ -1,0 +1,27 @@
+{
+  "name": "cranpun-freenote",
+  "version": "1.0.0",
+  "description": "freehand draw tool",
+  "main": "index.html",
+  "dependencies": {},
+  "devDependencies": {
+    "@types/tesseract.js": "0.0.2",
+    "json-loader": "^0.5.4"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": ""
+  },
+  "keywords": [
+    "private"
+  ],
+  "author": "cranpun",
+  "license": "ISC",
+  "bugs": {
+    "url": ""
+  },
+  "homepage": ""
+}
