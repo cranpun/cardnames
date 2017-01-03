@@ -1,12 +1,14 @@
 {
-  "name": "cranpun-freenote",
+  "name": "cardnames",
   "version": "1.0.0",
-  "description": "freehand draw tool",
+  "description": "analy wiz card name ",
   "main": "index.html",
-  "dependencies": {},
+  "dependencies": {
+    "json-loader": "^0.5.4",
+    "tesseract.js": "^1.0.10"
+  },
   "devDependencies": {
-    "@types/tesseract.js": "0.0.2",
-    "json-loader": "^0.5.4"
+    "@types/tesseract.js": "0.0.2"
   },
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"

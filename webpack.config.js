@@ -7,20 +7,19 @@ module.exports = {
     filename: 'cardnames.js'
   },
   resolve: {
-    extensions: ['', '.tsx', '.ts', '.js', '.json']
+    extensions: ['', '.tsx', '.ts', '.js']
   },
   module: {
     loaders: [
       {
-        test: /\.ts(x?)$/,
-        loader: 'ts-loader',
-        exclude: [/node_modules/]
+        test: /\.json$/,
+        //exclude: /node_modules/,
+        loader: 'json-loader'
       },
       {
-        test: /\.json$/,
-        loader: 'json-loader',
-        exclude: [/node_modules/],
-        include: "data/cards.json"
+        test: /\.ts(x?)$/,
+        //exclude: /node_modules/,
+        loader: 'ts-loader'
       }
     ]
   },
