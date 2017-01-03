@@ -80,14 +80,15 @@
 	            var tr = this.makeRow_(this.cards_[i]);
 	            this.tbody_.appendChild(tr);
 	        }
-	        console.log(this.cards_);
 	    };
 	    CardRows.prototype.makeRow_ = function (card) {
 	        var tr = document.createElement("tr");
 	        var td_file = document.createElement("td");
 	        var td_name = document.createElement("td");
 	        td_file.innerText = this.makeCardNo_(card["filename"]);
-	        td_name.innerText = this.analyCardName(card["filename"]);
+	        var nameid = this.analyCardName(card["filename"]);
+	        td_name.id = nameid;
+	        td_name.innerText = "分析中...";
 	        tr.appendChild(td_file);
 	        tr.appendChild(td_name);
 	        return tr;
@@ -96,12 +97,29 @@
 	        return filename.replace("c", "").replace(".jpg", "");
 	    };
 	    CardRows.prototype.analyCardName = function (filename) {
+	        var id = filename.replace(".", "_");
 	        // MYTODO 画像解析して名前を取得
-	        var tes = Tesseract
-	            .recognize("./data/" + filename, { lang: "language" })
-	            .progress(function (p) { console.log(p); })
-	            .then(function (res) { console.log(res); });
-	        return filename;
+	        var tes = Tesseract.recognize("./data/" + filename, {
+	            lang: "jpn",
+	            "tessedit_pageseg_mode": 4
+	        })
+	            .then(function (res) {
+	            var td_name = document.getElementById(id);
+	            // カード名はだいたい最後から2番目
+	            var name = "";
+	            for (var i = 0; i < res.lines.length; i++) {
+	                if (res.lines[i].confidence > 70) {
+	                    if (res.lines[i].baseline.y1 == 931) {
+	                        //console.log(res.lines[i]);
+	                        //name += "(" + res.lines[i].confidence + ")";
+	                        name += res.lines[i].text;
+	                    }
+	                }
+	            }
+	            td_name.innerText = name;
+	            //console.log(res);
+	        });
+	        return id;
 	    };
 	    return CardRows;
 	}());

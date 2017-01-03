@@ -13,7 +13,6 @@ export class CardRows {
             let tr = this.makeRow_(this.cards_[i]);
             this.tbody_.appendChild(tr);
         }
-        console.log(this.cards_);
     }
 
     makeRow_(card: { [key: string]: string }): Node {
@@ -21,7 +20,9 @@ export class CardRows {
         let td_file = document.createElement("td");
         let td_name = document.createElement("td");
         td_file.innerText = this.makeCardNo_(card["filename"]);
-        td_name.innerText = this.analyCardName(card["filename"]);
+        let nameid = this.analyCardName(card["filename"]);
+        td_name.id = nameid;
+        td_name.innerText = "分析中...";
         tr.appendChild(td_file);
         tr.appendChild(td_name);
         return tr;
@@ -32,13 +33,35 @@ export class CardRows {
     }
 
     analyCardName(filename: string): string {
+        let id = filename.replace(".", "_");
+
         // MYTODO 画像解析して名前を取得
-        let tes = Tesseract
-            .recognize("./data/" + filename, { lang: "language" })
-             .progress(function (p) { console.log(p) })
-             .then(function(res) {console.log(res)})
+        let tes = Tesseract.recognize("./data/" + filename,
+            {
+                lang: "jpn",
+                "tessedit_pageseg_mode": 4
+            })
+            // .progress(function (p) {
+            //     console.log(p);
+            // })
+            .then(function (res) {
+                let td_name = document.getElementById(id);
+                // カード名はだいたい最後から2番目
+                let name = "";
+                for (let i = 0; i < res.lines.length; i++) {
+                    if (res.lines[i].confidence > 70) {
+                        if (res.lines[i].baseline.y1 == 931) {
+                            //console.log(res.lines[i]);
+                            //name += "(" + res.lines[i].confidence + ")";
+                            name += res.lines[i].text;
+                        }
+                    }
+                }
+                td_name.innerText = name;
+                //console.log(res);
+            })
             ;
 
-        return filename;
+        return id;
     }
 }
