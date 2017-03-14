@@ -16,10 +16,11 @@ export class CardRows {
     }
 
     makeRow_(card: { [key: string]: string }): Node {
+        console.log("s : " + card["filename"]);
         let tr = document.createElement("tr");
         let td_file = document.createElement("td");
         let td_name = document.createElement("td");
-        td_file.innerText = this.makeCardNo_(card["filename"]);
+        td_file.innerHTML = this.makeCardNo_(card["filename"]);
         let nameid = this.analyCardName(card["filename"]);
         td_name.id = nameid;
         td_name.innerText = "分析中...";
@@ -28,15 +29,22 @@ export class CardRows {
         return tr;
     }
 
+    makeImgPath_(filename: string) {
+        //return "./data/" + filename;
+        return "./_cards/" + filename;
+        //return "./_cards_sub/" + filename;
+    }
+
     makeCardNo_(filename: string): string {
-        return filename.replace("c", "").replace(".jpg", "");
+        let name = filename.replace("c", "").replace(".jpg", "");
+        let path = this.makeImgPath_(filename);
+        return "<a target='_blank' href='" + path + "'>" + name + "</a>";
     }
 
     analyCardName(filename: string): string {
         let id = filename.replace(".", "_");
-
-        // MYTODO 画像解析して名前を取得
-        let tes = Tesseract.recognize("./data/" + filename,
+        let path = this.makeImgPath_(filename);
+        let tes = Tesseract.recognize(path,
             {
                 lang: "jpn",
                 "tessedit_pageseg_mode": 4
@@ -49,16 +57,18 @@ export class CardRows {
                 // カード名はだいたい最後から2番目
                 let name = "";
                 for (let i = 0; i < res.lines.length; i++) {
-                    if (res.lines[i].confidence > 70) {
-                        if (res.lines[i].baseline.y1 == 931) {
+                    if (res.lines[i].confidence > 60) {
+                        let y1 = res.lines[i].baseline.y1;
+                        if (1800 <= y1 && y1 <= 1900) {
                             //console.log(res.lines[i]);
                             //name += "(" + res.lines[i].confidence + ")";
-                            name += res.lines[i].text;
+                            name += "[[[" + res.lines[i].confidence + "]]]:" + res.lines[i].text;
                         }
                     }
                 }
-                td_name.innerText = name;
-                //console.log(res);
+                td_name.innerText = name.replace(/\r?\n/g,"");
+                console.log(res);
+                console.log("e : " + name);
             })
             ;
 

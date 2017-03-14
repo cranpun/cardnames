@@ -55,6 +55,10 @@
 	var CardRows_1 = __webpack_require__(2);
 	window.addEventListener("load", main, false);
 	function main() {
+	    var bt_start = document.getElementById("bt_start");
+	    bt_start.addEventListener("click", startAnaly, false);
+	}
+	function startAnaly() {
 	    //let cards :[{ [key: string]: string }] = [{"filename": "hoge.jpg"}, {"filename": "hogehoge"}];
 	    var cards = __webpack_require__(10);
 	    var tbody = document.getElementById("cardtbody");
@@ -82,10 +86,11 @@
 	        }
 	    };
 	    CardRows.prototype.makeRow_ = function (card) {
+	        console.log("s : " + card["filename"]);
 	        var tr = document.createElement("tr");
 	        var td_file = document.createElement("td");
 	        var td_name = document.createElement("td");
-	        td_file.innerText = this.makeCardNo_(card["filename"]);
+	        td_file.innerHTML = this.makeCardNo_(card["filename"]);
 	        var nameid = this.analyCardName(card["filename"]);
 	        td_name.id = nameid;
 	        td_name.innerText = "分析中...";
@@ -93,13 +98,20 @@
 	        tr.appendChild(td_name);
 	        return tr;
 	    };
+	    CardRows.prototype.makeImgPath_ = function (filename) {
+	        //return "./data/" + filename;
+	        return "./_cards/" + filename;
+	        //return "./_cards_sub/" + filename;
+	    };
 	    CardRows.prototype.makeCardNo_ = function (filename) {
-	        return filename.replace("c", "").replace(".jpg", "");
+	        var name = filename.replace("c", "").replace(".jpg", "");
+	        var path = this.makeImgPath_(filename);
+	        return "<a target='_blank' href='" + path + "'>" + name + "</a>";
 	    };
 	    CardRows.prototype.analyCardName = function (filename) {
 	        var id = filename.replace(".", "_");
-	        // MYTODO 画像解析して名前を取得
-	        var tes = Tesseract.recognize("./data/" + filename, {
+	        var path = this.makeImgPath_(filename);
+	        var tes = Tesseract.recognize(path, {
 	            lang: "jpn",
 	            "tessedit_pageseg_mode": 4
 	        })
@@ -108,16 +120,18 @@
 	            // カード名はだいたい最後から2番目
 	            var name = "";
 	            for (var i = 0; i < res.lines.length; i++) {
-	                if (res.lines[i].confidence > 70) {
-	                    if (res.lines[i].baseline.y1 == 931) {
+	                if (res.lines[i].confidence > 60) {
+	                    var y1 = res.lines[i].baseline.y1;
+	                    if (1800 <= y1 && y1 <= 1900) {
 	                        //console.log(res.lines[i]);
 	                        //name += "(" + res.lines[i].confidence + ")";
-	                        name += res.lines[i].text;
+	                        name += "[[[" + res.lines[i].confidence + "]]]:" + res.lines[i].text;
 	                    }
 	                }
 	            }
-	            td_name.innerText = name;
-	            //console.log(res);
+	            td_name.innerText = name.replace(/\r?\n/g, "");
+	            console.log(res);
+	            console.log("e : " + name);
 	        });
 	        return id;
 	    };
@@ -513,18 +527,18 @@
 		"_args": [
 			[
 				{
-					"raw": "tesseract.js@^1.0.10",
+					"raw": "tesseract.js@1.0.10",
 					"scope": null,
 					"escapedName": "tesseract.js",
 					"name": "tesseract.js",
-					"rawSpec": "^1.0.10",
-					"spec": ">=1.0.10 <2.0.0",
-					"type": "range"
+					"rawSpec": "1.0.10",
+					"spec": "1.0.10",
+					"type": "version"
 				},
-				"/Users/cranpun/Desktop/work/001_netdrive/cardnames"
+				"E:\\001_netdrive\\git\\cardnames"
 			]
 		],
-		"_from": "tesseract.js@>=1.0.10 <2.0.0",
+		"_from": "tesseract.js@1.0.10",
 		"_id": "tesseract.js@1.0.10",
 		"_inCache": true,
 		"_location": "/tesseract.js",
@@ -540,13 +554,13 @@
 		"_npmVersion": "3.10.8",
 		"_phantomChildren": {},
 		"_requested": {
-			"raw": "tesseract.js@^1.0.10",
+			"raw": "tesseract.js@1.0.10",
 			"scope": null,
 			"escapedName": "tesseract.js",
 			"name": "tesseract.js",
-			"rawSpec": "^1.0.10",
-			"spec": ">=1.0.10 <2.0.0",
-			"type": "range"
+			"rawSpec": "1.0.10",
+			"spec": "1.0.10",
+			"type": "version"
 		},
 		"_requiredBy": [
 			"#USER",
@@ -555,8 +569,8 @@
 		"_resolved": "https://registry.npmjs.org/tesseract.js/-/tesseract.js-1.0.10.tgz",
 		"_shasum": "e11a96ae76147939d9218f88e287fb69414b1e5d",
 		"_shrinkwrap": null,
-		"_spec": "tesseract.js@^1.0.10",
-		"_where": "/Users/cranpun/Desktop/work/001_netdrive/cardnames",
+		"_spec": "tesseract.js@1.0.10",
+		"_where": "E:\\001_netdrive\\git\\cardnames",
 		"author": "",
 		"browser": {
 			"./src/node/index.js": "./src/browser/index.js"
@@ -869,13 +883,43 @@
 
 	module.exports = [
 		{
-			"filename": "c00001.jpg"
+			"filename": "c08031.jpg"
 		},
 		{
-			"filename": "c00005.jpg"
+			"filename": "c08032.jpg"
 		},
 		{
-			"filename": "c00100.jpg"
+			"filename": "c08033.jpg"
+		},
+		{
+			"filename": "c08034.jpg"
+		},
+		{
+			"filename": "c08035.jpg"
+		},
+		{
+			"filename": "c08036.jpg"
+		},
+		{
+			"filename": "c08037.jpg"
+		},
+		{
+			"filename": "c08038.jpg"
+		},
+		{
+			"filename": "c08039.jpg"
+		},
+		{
+			"filename": "c08040.jpg"
+		},
+		{
+			"filename": "c08041.jpg"
+		},
+		{
+			"filename": "c08042.jpg"
+		},
+		{
+			"filename": "c08043.jpg"
 		}
 	];
 

@@ -2,3 +2,5 @@ data/*
 !data/cards.json
 node_modules
 .DS_Store
+_cards
+_cards_sub
