@@ -3,6 +3,8 @@ import * as Tesseract from "tesseract.js";
 export class CardRows {
     private tbody_: HTMLElement;
     private cards_: [{ [key: string]: string }];
+    private 
+
     constructor(tbody: HTMLElement, cards: [{ [key: string]: string }]) {
         this.tbody_ = tbody;
         this.cards_ = cards;
@@ -15,15 +17,22 @@ export class CardRows {
         }
     }
 
+    analyRows(): void {
+        let i: number;
+        for (i = 0; i < this.cards_.length; i++) {
+            this.analyCardName(this.cards_[i]["filename"]);
+        }
+    }
+
     makeRow_(card: { [key: string]: string }): Node {
         console.log("s : " + card["filename"]);
         let tr = document.createElement("tr");
         let td_file = document.createElement("td");
         let td_name = document.createElement("td");
         td_file.innerHTML = this.makeCardNo_(card["filename"]);
-        let nameid = this.analyCardName(card["filename"]);
+        let nameid = this.getId_(card["filename"]);
         td_name.id = nameid;
-        td_name.innerText = "分析中...";
+        td_name.innerText = "ready...";
         tr.appendChild(td_file);
         tr.appendChild(td_name);
         return tr;
@@ -41,8 +50,12 @@ export class CardRows {
         return "<a target='_blank' href='" + path + "'>" + name + "</a>";
     }
 
+    getId_(filename: string) : string {
+        return filename.replace(".", "_");
+    }
+
     analyCardName(filename: string): string {
-        let id = filename.replace(".", "_");
+        let id = this.getId_(filename);
         let path = this.makeImgPath_(filename);
         let tes = Tesseract.recognize(path,
             {

@@ -7,7 +7,7 @@ module.exports = {
     filename: 'cardnames.js'
   },
   resolve: {
-    extensions: ['', '.tsx', '.ts', '.js']
+    extensions: ['.tsx', '.ts', '.js']
   },
   module: {
     loaders: [
