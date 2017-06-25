@@ -6,9 +6,9 @@
 /******/ 	function __webpack_require__(moduleId) {
 /******/
 /******/ 		// Check if module is in cache
-/******/ 		if(installedModules[moduleId])
+/******/ 		if(installedModules[moduleId]) {
 /******/ 			return installedModules[moduleId].exports;
-/******/
+/******/ 		}
 /******/ 		// Create a new module (and put it into the cache)
 /******/ 		var module = installedModules[moduleId] = {
 /******/ 			i: moduleId,
@@ -32,9 +32,6 @@
 /******/
 /******/ 	// expose the module cache
 /******/ 	__webpack_require__.c = installedModules;
-/******/
-/******/ 	// identity function for calling harmony imports with the correct context
-/******/ 	__webpack_require__.i = function(value) { return value; };
 /******/
 /******/ 	// define getter function for harmony exports
 /******/ 	__webpack_require__.d = function(exports, name, getter) {
@@ -63,11 +60,116 @@
 /******/ 	__webpack_require__.p = "";
 /******/
 /******/ 	// Load entry module and return exports
-/******/ 	return __webpack_require__(__webpack_require__.s = 10);
+/******/ 	return __webpack_require__(__webpack_require__.s = 2);
 /******/ })
 /************************************************************************/
 /******/ ([
 /* 0 */
+/***/ (function(module, exports, __webpack_require__) {
+
+/* WEBPACK VAR INJECTION */(function(process) {var defaultOptions = {
+    // workerPath: 'https://cdn.rawgit.com/naptha/tesseract.js/0.2.0/dist/worker.js',
+    corePath: 'https://cdn.rawgit.com/naptha/tesseract.js-core/0.1.0/index.js',    
+    langPath: 'https://cdn.rawgit.com/naptha/tessdata/gh-pages/3.02/',
+}
+
+if (process.env.NODE_ENV === "development") {
+    console.debug('Using Development Configuration')
+    defaultOptions.workerPath = location.protocol + '//' + location.host + '/dist/worker.dev.js?nocache=' + Math.random().toString(36).slice(3)
+}else{
+    var version = __webpack_require__(1).version;
+    defaultOptions.workerPath = 'https://cdn.rawgit.com/naptha/tesseract.js/' + version + '/dist/worker.js'
+}
+
+exports.defaultOptions = defaultOptions;
+
+
+exports.spawnWorker = function spawnWorker(instance, workerOptions){
+    if(window.Blob && window.URL){
+        var blob = new Blob(['importScripts("' + workerOptions.workerPath + '");'])
+        var worker = new Worker(window.URL.createObjectURL(blob));
+    }else{
+        var worker = new Worker(workerOptions.workerPath)
+    }
+
+    worker.onmessage = function(e){
+        var packet = e.data;
+        instance._recv(packet)
+    }
+    return worker
+}
+
+exports.terminateWorker = function(instance){
+    instance.worker.terminate()
+}
+
+exports.sendPacket = function sendPacket(instance, packet){
+    loadImage(packet.payload.image, function(img){
+        packet.payload.image = img
+        instance.worker.postMessage(packet) 
+    })
+}
+
+
+function loadImage(image, cb){
+    if(typeof image === 'string'){
+        if(/^\#/.test(image)){
+            // element css selector
+            return loadImage(document.querySelector(image), cb)
+        }else if(/(blob|data)\:/.test(image)){
+            // data url
+            var im = new Image
+            im.src = image;
+            im.onload = e => loadImage(im, cb);
+            return
+        }else{
+            var xhr = new XMLHttpRequest();
+            xhr.open('GET', image, true)
+            xhr.responseType = "blob";
+            xhr.onload = e => loadImage(xhr.response, cb);
+            xhr.onerror = function(e){
+                if(/^https?:\/\//.test(image) && !/^https:\/\/crossorigin.me/.test(image)){
+                    console.debug('Attempting to load image with CORS proxy')
+                    loadImage('https://crossorigin.me/' + image, cb)
+                }
+            }
+            xhr.send(null)
+            return
+        }
+    }else if(image instanceof File){
+        // files
+        var fr = new FileReader()
+        fr.onload = e => loadImage(fr.result, cb);
+        fr.readAsDataURL(image)
+        return
+    }else if(image instanceof Blob){
+        return loadImage(URL.createObjectURL(image), cb)
+    }else if(image.getContext){
+        // canvas element
+        return loadImage(image.getContext('2d'), cb)
+    }else if(image.tagName == "IMG" || image.tagName == "VIDEO"){
+        // image element or video element
+        var c = document.createElement('canvas');
+        c.width  = image.naturalWidth  || image.videoWidth;
+        c.height = image.naturalHeight || image.videoHeight;
+        var ctx = c.getContext('2d');
+        ctx.drawImage(image, 0, 0);
+        return loadImage(ctx, cb)
+    }else if(image.getImageData){
+        // canvas context
+        var data = image.getImageData(0, 0, image.canvas.width, image.canvas.height);
+        return loadImage(data, cb)
+    }else{
+        return cb(image)
+    }
+    throw new Error('Missing return in loadImage cascade')
+
+}
+
+/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(6)))
+
+/***/ }),
+/* 1 */
 /***/ (function(module, exports) {
 
 module.exports = {
@@ -181,134 +283,10 @@ module.exports = {
 };
 
 /***/ }),
-/* 1 */
-/***/ (function(module, exports, __webpack_require__) {
-
-/* WEBPACK VAR INJECTION */(function(process) {var defaultOptions = {
-    // workerPath: 'https://cdn.rawgit.com/naptha/tesseract.js/0.2.0/dist/worker.js',
-    corePath: 'https://cdn.rawgit.com/naptha/tesseract.js-core/0.1.0/index.js',    
-    langPath: 'https://cdn.rawgit.com/naptha/tessdata/gh-pages/3.02/',
-}
-
-if (process.env.NODE_ENV === "development") {
-    console.debug('Using Development Configuration')
-    defaultOptions.workerPath = location.protocol + '//' + location.host + '/dist/worker.dev.js?nocache=' + Math.random().toString(36).slice(3)
-}else{
-    var version = __webpack_require__(0).version;
-    defaultOptions.workerPath = 'https://cdn.rawgit.com/naptha/tesseract.js/' + version + '/dist/worker.js'
-}
-
-exports.defaultOptions = defaultOptions;
-
-
-exports.spawnWorker = function spawnWorker(instance, workerOptions){
-    if(window.Blob && window.URL){
-        var blob = new Blob(['importScripts("' + workerOptions.workerPath + '");'])
-        var worker = new Worker(window.URL.createObjectURL(blob));
-    }else{
-        var worker = new Worker(workerOptions.workerPath)
-    }
-
-    worker.onmessage = function(e){
-        var packet = e.data;
-        instance._recv(packet)
-    }
-    return worker
-}
-
-exports.terminateWorker = function(instance){
-    instance.worker.terminate()
-}
-
-exports.sendPacket = function sendPacket(instance, packet){
-    loadImage(packet.payload.image, function(img){
-        packet.payload.image = img
-        instance.worker.postMessage(packet) 
-    })
-}
-
-
-function loadImage(image, cb){
-    if(typeof image === 'string'){
-        if(/^\#/.test(image)){
-            // element css selector
-            return loadImage(document.querySelector(image), cb)
-        }else if(/(blob|data)\:/.test(image)){
-            // data url
-            var im = new Image
-            im.src = image;
-            im.onload = e => loadImage(im, cb);
-            return
-        }else{
-            var xhr = new XMLHttpRequest();
-            xhr.open('GET', image, true)
-            xhr.responseType = "blob";
-            xhr.onload = e => loadImage(xhr.response, cb);
-            xhr.onerror = function(e){
-                if(/^https?:\/\//.test(image) && !/^https:\/\/crossorigin.me/.test(image)){
-                    console.debug('Attempting to load image with CORS proxy')
-                    loadImage('https://crossorigin.me/' + image, cb)
-                }
-            }
-            xhr.send(null)
-            return
-        }
-    }else if(image instanceof File){
-        // files
-        var fr = new FileReader()
-        fr.onload = e => loadImage(fr.result, cb);
-        fr.readAsDataURL(image)
-        return
-    }else if(image instanceof Blob){
-        return loadImage(URL.createObjectURL(image), cb)
-    }else if(image.getContext){
-        // canvas element
-        return loadImage(image.getContext('2d'), cb)
-    }else if(image.tagName == "IMG" || image.tagName == "VIDEO"){
-        // image element or video element
-        var c = document.createElement('canvas');
-        c.width  = image.naturalWidth  || image.videoWidth;
-        c.height = image.naturalHeight || image.videoHeight;
-        var ctx = c.getContext('2d');
-        ctx.drawImage(image, 0, 0);
-        return loadImage(ctx, cb)
-    }else if(image.getImageData){
-        // canvas context
-        var data = image.getImageData(0, 0, image.canvas.width, image.canvas.height);
-        return loadImage(data, cb)
-    }else{
-        return cb(image)
-    }
-    throw new Error('Missing return in loadImage cascade')
-
-}
-
-/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(4)))
-
-/***/ }),
 /* 2 */
 /***/ (function(module, exports, __webpack_require__) {
 
-"use strict";
-
-Object.defineProperty(exports, "__esModule", { value: true });
-var CardRows_1 = __webpack_require__(3);
-window.addEventListener("load", main, false);
-var rows;
-var bt_start;
-function main() {
-    bt_start = document.getElementById("bt_start");
-    bt_start.addEventListener("click", startAnaly, false);
-    //let cards :[{ [key: string]: string }] = [{"filename": "hoge.jpg"}, {"filename": "hogehoge"}];
-    var cards = __webpack_require__(5);
-    var tbody = document.getElementById("cardtbody");
-    rows = new CardRows_1.CardRows(tbody, cards);
-    rows.makeRows();
-}
-function startAnaly() {
-    bt_start.innerText = "分析中";
-    rows.analyRows();
-}
+module.exports = __webpack_require__(3);
 
 
 /***/ }),
@@ -318,7 +296,33 @@ function startAnaly() {
 "use strict";
 
 Object.defineProperty(exports, "__esModule", { value: true });
-var Tesseract = __webpack_require__(9);
+var CardRows_1 = __webpack_require__(4);
+window.addEventListener("load", main, false);
+var rows;
+var bt_start;
+function main() {
+    bt_start = document.getElementById("bt_start");
+    bt_start.addEventListener("click", startAnaly, false);
+    //let cards :[{ [key: string]: string }] = [{"filename": "hoge.jpg"}, {"filename": "hogehoge"}];
+    var cards = __webpack_require__(10);
+    var tbody = document.getElementById("cardtbody");
+    rows = new CardRows_1.CardRows(tbody, cards);
+    rows.makeRows();
+}
+function startAnaly() {
+    bt_start.innerText = "分析中...";
+    rows.analyRows();
+}
+
+
+/***/ }),
+/* 4 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+Object.defineProperty(exports, "__esModule", { value: true });
+var Tesseract = __webpack_require__(5);
 var CardRows = (function () {
     function CardRows(tbody, cards) {
         this.tbody_ = tbody;
@@ -342,10 +346,13 @@ var CardRows = (function () {
         var tr = document.createElement("tr");
         var td_file = document.createElement("td");
         var td_name = document.createElement("td");
+        var td_img = document.createElement("td");
         td_file.innerHTML = this.makeCardNo_(card["filename"]);
+        td_img.innerHTML = this.makeCardImg_(card["filename"]);
         var nameid = this.getId_(card["filename"]);
         td_name.id = nameid;
         td_name.innerText = "ready...";
+        tr.appendChild(td_img);
         tr.appendChild(td_file);
         tr.appendChild(td_name);
         return tr;
@@ -353,19 +360,31 @@ var CardRows = (function () {
     CardRows.prototype.makeImgPath_ = function (filename) {
         //return "./data/" + filename;
         return "./_cards/" + filename;
+        //return path.resolve(__dirname, '_cards', filename);
         //return "./_cards_sub/" + filename;
     };
     CardRows.prototype.makeCardNo_ = function (filename) {
         var name = filename.replace("c", "").replace(".jpg", "");
         var path = this.makeImgPath_(filename);
-        return "<a target='_blank' href='" + path + "'>" + name + "</a>";
+        var id = "img_" + this.getId_(filename);
+        var ret = "<a target='_blank' href='" + path + "'>";
+        ret += name;
+        ret += "</a>";
+        return ret;
+    };
+    CardRows.prototype.makeCardImg_ = function (filename) {
+        var path = this.makeImgPath_(filename);
+        var id = "img_" + this.getId_(filename);
+        var ret = "<img src='" + path + "' id='" + id + "'>";
+        return ret;
     };
     CardRows.prototype.getId_ = function (filename) {
         return filename.replace(".", "_");
     };
     CardRows.prototype.analyCardName = function (filename) {
         var id = this.getId_(filename);
-        var path = this.makeImgPath_(filename);
+        //let path = this.makeImgPath_(filename);
+        var path = document.getElementById("img_" + id);
         var tes = Tesseract.recognize(path, {
             lang: "jpn",
             "tessedit_pageseg_mode": 4
@@ -396,7 +415,95 @@ exports.CardRows = CardRows;
 
 
 /***/ }),
-/* 4 */
+/* 5 */
+/***/ (function(module, exports, __webpack_require__) {
+
+const adapter = __webpack_require__(0)
+const circularize = __webpack_require__(7)
+const TesseractJob = __webpack_require__(8);
+const objectAssign = __webpack_require__(9);
+const version = __webpack_require__(1).version;
+
+function create(workerOptions){
+	workerOptions = workerOptions || {};
+	var worker = new TesseractWorker(objectAssign({}, adapter.defaultOptions, workerOptions))
+	worker.create = create;
+	worker.version = version;
+	return worker;
+}
+
+class TesseractWorker {
+	constructor(workerOptions){
+		this.worker = null;
+		this.workerOptions = workerOptions;
+		this._currentJob = null;
+		this._queue = []
+	}
+
+	recognize(image, options){
+		return this._delay(job => {
+			if(typeof options === 'string'){
+				options = { lang: options };
+			}else{
+				options = options || {}
+				options.lang = options.lang || 'eng';	
+			}
+			
+			job._send('recognize', { image: image, options: options, workerOptions: this.workerOptions })
+		})
+	}
+	detect(image, options){
+		options = options || {}
+		return this._delay(job => {
+			job._send('detect', { image: image, options: options, workerOptions: this.workerOptions })
+		})
+	}
+
+	terminate(){ 
+		if(this.worker) adapter.terminateWorker(this);
+		this.worker = null;
+	}
+
+	_delay(fn){
+		if(!this.worker) this.worker = adapter.spawnWorker(this, this.workerOptions);
+
+		var job = new TesseractJob(this);
+		this._queue.push(e => {
+			this._queue.shift()
+			this._currentJob = job;
+			fn(job)
+		})
+		if(!this._currentJob) this._dequeue();
+		return job
+	}
+
+	_dequeue(){
+		this._currentJob = null;
+		if(this._queue.length > 0){
+			this._queue[0]()
+		}
+	}
+
+	_recv(packet){
+
+        if(packet.status === 'resolve' && packet.action === 'recognize'){
+            packet.data = circularize(packet.data);
+        }
+
+		if(this._currentJob.id === packet.jobId){
+			this._currentJob._handle(packet)
+		}else{
+			console.warn('Job ID ' + packet.jobId + ' not known.')
+		}
+	}
+}
+
+var DefaultTesseract = create()
+
+module.exports = DefaultTesseract
+
+/***/ }),
+/* 6 */
 /***/ (function(module, exports) {
 
 // shim for using process in browser
@@ -569,6 +676,10 @@ process.off = noop;
 process.removeListener = noop;
 process.removeAllListeners = noop;
 process.emit = noop;
+process.prependListener = noop;
+process.prependOnceListener = noop;
+
+process.listeners = function (name) { return [] }
 
 process.binding = function (name) {
     throw new Error('process.binding is not supported');
@@ -582,53 +693,162 @@ process.umask = function() { return 0; };
 
 
 /***/ }),
-/* 5 */
+/* 7 */
 /***/ (function(module, exports) {
 
-module.exports = [
-	{
-		"filename": "c08031.jpg"
-	},
-	{
-		"filename": "c08032.jpg"
-	},
-	{
-		"filename": "c08033.jpg"
-	},
-	{
-		"filename": "c08034.jpg"
-	},
-	{
-		"filename": "c08035.jpg"
-	},
-	{
-		"filename": "c08036.jpg"
-	},
-	{
-		"filename": "c08037.jpg"
-	},
-	{
-		"filename": "c08038.jpg"
-	},
-	{
-		"filename": "c08039.jpg"
-	},
-	{
-		"filename": "c08040.jpg"
-	},
-	{
-		"filename": "c08041.jpg"
-	},
-	{
-		"filename": "c08042.jpg"
-	},
-	{
-		"filename": "c08043.jpg"
-	}
-];
+// The result of dump.js is a big JSON tree
+// which can be easily serialized (for instance
+// to be sent from a webworker to the main app
+// or through Node's IPC), but we want
+// a (circular) DOM-like interface for walking
+// through the data. 
+
+module.exports = function circularize(page){
+    page.paragraphs = []
+    page.lines = []
+    page.words = []
+    page.symbols = []
+
+    page.blocks.forEach(function(block){
+        block.page = page;
+
+        block.lines = []
+        block.words = []
+        block.symbols = []
+
+        block.paragraphs.forEach(function(para){
+            para.block = block;
+            para.page = page;
+
+            para.words = []
+            para.symbols = []
+            
+            para.lines.forEach(function(line){
+                line.paragraph = para;
+                line.block = block;
+                line.page = page;
+
+                line.symbols = []
+
+                line.words.forEach(function(word){
+                    word.line = line;
+                    word.paragraph = para;
+                    word.block = block;
+                    word.page = page;
+                    word.symbols.forEach(function(sym){
+                        sym.word = word;
+                        sym.line = line;
+                        sym.paragraph = para;
+                        sym.block = block;
+                        sym.page = page;
+                        
+                        sym.line.symbols.push(sym)
+                        sym.paragraph.symbols.push(sym)
+                        sym.block.symbols.push(sym)
+                        sym.page.symbols.push(sym)
+                    })
+                    word.paragraph.words.push(word)
+                    word.block.words.push(word)
+                    word.page.words.push(word)
+                })
+                line.block.lines.push(line)
+                line.page.lines.push(line)
+            })
+            para.page.paragraphs.push(para)
+        })
+    })
+    return page
+}
 
 /***/ }),
-/* 6 */
+/* 8 */
+/***/ (function(module, exports, __webpack_require__) {
+
+const adapter = __webpack_require__(0)
+
+let jobCounter = 0;
+
+module.exports = class TesseractJob {
+    constructor(instance){
+        this.id = 'Job-' + (++jobCounter) + '-' + Math.random().toString(16).slice(3, 8)
+
+        this._instance = instance;
+        this._resolve = []
+        this._reject = []
+        this._progress = []
+        this._finally = []
+    }
+
+    then(resolve, reject){
+        if(this._resolve.push){
+            this._resolve.push(resolve) 
+        }else{
+            resolve(this._resolve)
+        }
+
+        if(reject) this.catch(reject);
+        return this;
+    }
+    catch(reject){
+        if(this._reject.push){
+            this._reject.push(reject) 
+        }else{
+            reject(this._reject)
+        }
+        return this;
+    }
+    progress(fn){
+        this._progress.push(fn)
+        return this;
+    }
+    finally(fn) {
+        this._finally.push(fn)
+        return this;  
+    }
+    _send(action, payload){
+        adapter.sendPacket(this._instance, {
+            jobId: this.id,
+            action: action,
+            payload: payload
+        })
+    }
+
+    _handle(packet){
+        var data = packet.data;
+        let runFinallyCbs = false;
+
+        if(packet.status === 'resolve'){
+            if(this._resolve.length === 0) console.log(data);
+            this._resolve.forEach(fn => {
+                var ret = fn(data);
+                if(ret && typeof ret.then == 'function'){
+                    console.warn('TesseractJob instances do not chain like ES6 Promises. To convert it into a real promise, use Promise.resolve.')
+                }
+            })
+            this._resolve = data;
+            this._instance._dequeue()
+            runFinallyCbs = true;
+        }else if(packet.status === 'reject'){
+            if(this._reject.length === 0) console.error(data);
+            this._reject.forEach(fn => fn(data))
+            this._reject = data;
+            this._instance._dequeue()
+            runFinallyCbs = true;
+        }else if(packet.status === 'progress'){
+            this._progress.forEach(fn => fn(data))
+        }else{
+            console.warn('Message type unknown', packet.status)
+        }
+
+        if (runFinallyCbs) {
+            this._finally.forEach(fn => fn(data));
+        }
+    }
+}
+
+
+/***/ }),
+/* 9 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -718,254 +938,20 @@ module.exports = shouldUseNative() ? Object.assign : function (target, source) {
 
 
 /***/ }),
-/* 7 */
+/* 10 */
 /***/ (function(module, exports) {
 
-// The result of dump.js is a big JSON tree
-// which can be easily serialized (for instance
-// to be sent from a webworker to the main app
-// or through Node's IPC), but we want
-// a (circular) DOM-like interface for walking
-// through the data. 
-
-module.exports = function circularize(page){
-    page.paragraphs = []
-    page.lines = []
-    page.words = []
-    page.symbols = []
-
-    page.blocks.forEach(function(block){
-        block.page = page;
-
-        block.lines = []
-        block.words = []
-        block.symbols = []
-
-        block.paragraphs.forEach(function(para){
-            para.block = block;
-            para.page = page;
-
-            para.words = []
-            para.symbols = []
-            
-            para.lines.forEach(function(line){
-                line.paragraph = para;
-                line.block = block;
-                line.page = page;
-
-                line.symbols = []
-
-                line.words.forEach(function(word){
-                    word.line = line;
-                    word.paragraph = para;
-                    word.block = block;
-                    word.page = page;
-                    word.symbols.forEach(function(sym){
-                        sym.word = word;
-                        sym.line = line;
-                        sym.paragraph = para;
-                        sym.block = block;
-                        sym.page = page;
-                        
-                        sym.line.symbols.push(sym)
-                        sym.paragraph.symbols.push(sym)
-                        sym.block.symbols.push(sym)
-                        sym.page.symbols.push(sym)
-                    })
-                    word.paragraph.words.push(word)
-                    word.block.words.push(word)
-                    word.page.words.push(word)
-                })
-                line.block.lines.push(line)
-                line.page.lines.push(line)
-            })
-            para.page.paragraphs.push(para)
-        })
-    })
-    return page
-}
-
-/***/ }),
-/* 8 */
-/***/ (function(module, exports, __webpack_require__) {
-
-const adapter = __webpack_require__(1)
-
-let jobCounter = 0;
-
-module.exports = class TesseractJob {
-    constructor(instance){
-        this.id = 'Job-' + (++jobCounter) + '-' + Math.random().toString(16).slice(3, 8)
-
-        this._instance = instance;
-        this._resolve = []
-        this._reject = []
-        this._progress = []
-        this._finally = []
-    }
-
-    then(resolve, reject){
-        if(this._resolve.push){
-            this._resolve.push(resolve) 
-        }else{
-            resolve(this._resolve)
-        }
-
-        if(reject) this.catch(reject);
-        return this;
-    }
-    catch(reject){
-        if(this._reject.push){
-            this._reject.push(reject) 
-        }else{
-            reject(this._reject)
-        }
-        return this;
-    }
-    progress(fn){
-        this._progress.push(fn)
-        return this;
-    }
-    finally(fn) {
-        this._finally.push(fn)
-        return this;  
-    }
-    _send(action, payload){
-        adapter.sendPacket(this._instance, {
-            jobId: this.id,
-            action: action,
-            payload: payload
-        })
-    }
-
-    _handle(packet){
-        var data = packet.data;
-        let runFinallyCbs = false;
-
-        if(packet.status === 'resolve'){
-            if(this._resolve.length === 0) console.log(data);
-            this._resolve.forEach(fn => {
-                var ret = fn(data);
-                if(ret && typeof ret.then == 'function'){
-                    console.warn('TesseractJob instances do not chain like ES6 Promises. To convert it into a real promise, use Promise.resolve.')
-                }
-            })
-            this._resolve = data;
-            this._instance._dequeue()
-            runFinallyCbs = true;
-        }else if(packet.status === 'reject'){
-            if(this._reject.length === 0) console.error(data);
-            this._reject.forEach(fn => fn(data))
-            this._reject = data;
-            this._instance._dequeue()
-            runFinallyCbs = true;
-        }else if(packet.status === 'progress'){
-            this._progress.forEach(fn => fn(data))
-        }else{
-            console.warn('Message type unknown', packet.status)
-        }
-
-        if (runFinallyCbs) {
-            this._finally.forEach(fn => fn(data));
-        }
-    }
-}
-
-
-/***/ }),
-/* 9 */
-/***/ (function(module, exports, __webpack_require__) {
-
-const adapter = __webpack_require__(1)
-const circularize = __webpack_require__(7)
-const TesseractJob = __webpack_require__(8);
-const objectAssign = __webpack_require__(6);
-const version = __webpack_require__(0).version;
-
-function create(workerOptions){
-	workerOptions = workerOptions || {};
-	var worker = new TesseractWorker(objectAssign({}, adapter.defaultOptions, workerOptions))
-	worker.create = create;
-	worker.version = version;
-	return worker;
-}
-
-class TesseractWorker {
-	constructor(workerOptions){
-		this.worker = null;
-		this.workerOptions = workerOptions;
-		this._currentJob = null;
-		this._queue = []
+module.exports = [
+	{
+		"filename": "c08464.jpg"
+	},
+	{
+		"filename": "c08465.jpg"
+	},
+	{
+		"filename": "c08562.jpg"
 	}
-
-	recognize(image, options){
-		return this._delay(job => {
-			if(typeof options === 'string'){
-				options = { lang: options };
-			}else{
-				options = options || {}
-				options.lang = options.lang || 'eng';	
-			}
-			
-			job._send('recognize', { image: image, options: options, workerOptions: this.workerOptions })
-		})
-	}
-	detect(image, options){
-		options = options || {}
-		return this._delay(job => {
-			job._send('detect', { image: image, options: options, workerOptions: this.workerOptions })
-		})
-	}
-
-	terminate(){ 
-		if(this.worker) adapter.terminateWorker(this);
-		this.worker = null;
-	}
-
-	_delay(fn){
-		if(!this.worker) this.worker = adapter.spawnWorker(this, this.workerOptions);
-
-		var job = new TesseractJob(this);
-		this._queue.push(e => {
-			this._queue.shift()
-			this._currentJob = job;
-			fn(job)
-		})
-		if(!this._currentJob) this._dequeue();
-		return job
-	}
-
-	_dequeue(){
-		this._currentJob = null;
-		if(this._queue.length > 0){
-			this._queue[0]()
-		}
-	}
-
-	_recv(packet){
-
-        if(packet.status === 'resolve' && packet.action === 'recognize'){
-            packet.data = circularize(packet.data);
-        }
-
-		if(this._currentJob.id === packet.jobId){
-			this._currentJob._handle(packet)
-		}else{
-			console.warn('Job ID ' + packet.jobId + ' not known.')
-		}
-	}
-}
-
-var DefaultTesseract = create()
-
-module.exports = DefaultTesseract
-
-/***/ }),
-/* 10 */
-/***/ (function(module, exports, __webpack_require__) {
-
-module.exports = __webpack_require__(2);
-
+];
 
 /***/ })
 /******/ ]);

@@ -1,9 +1,11 @@
+const path = require('path');
+
 module.exports = {
   entry: [
     './code/main.ts'
   ],
   output: {
-    path: './build',
+    path: path.resolve(__dirname, 'build'),
     filename: 'cardnames.js'
   },
   resolve: {
